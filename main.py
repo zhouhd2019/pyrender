@@ -23,6 +23,9 @@ class MainWnd(QtWidgets.QWidget):
 		qp.end()
 
 	def draw(self, qp: QPainter) -> None:
+		self.lesson_1(qp)
+
+	def lesson_1(self, qp: QPainter):
 		qp.setPen(Qt.blue)
 		size = self.size()
 		width = size.width()
