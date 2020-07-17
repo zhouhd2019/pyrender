@@ -7,10 +7,11 @@ class MainWnd(QtWidgets.QMainWindow):
 		super().__init__()
 		ui = main_window.Ui_MainWindow()
 		ui.setupUi(self)
+		self.show()
 
 
 if __name__ == '__main__':
 	import sys
 	app = QtWidgets.QApplication(sys.argv)
-	MainWnd().show()
+	wnd = MainWnd()
 	sys.exit(app.exec_())
