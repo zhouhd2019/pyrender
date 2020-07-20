@@ -26,7 +26,6 @@ class Model(object):
 				print('words: ', words)
 
 	def read_face(self, words):
-		v1 = words[1]
 		verts = []
 		for w in words[1:]:
 			verts.append(int(w.split('/')[0]))

@@ -19,6 +19,11 @@ class MainWnd(QtWidgets.QWidget):
 	def paintEvent(self, a0: QtGui.QPaintEvent) -> None:
 		qp = QPainter()
 		qp.begin(self)
+		size = self.size()
+		width = size.width()
+		height = size.height()
+		qp.translate(width * 0.5, height * 0.5)
+		qp.scale(1, -1)
 		self.draw(qp)
 		qp.end()
 
@@ -32,6 +37,7 @@ class MainWnd(QtWidgets.QWidget):
 		height = size.height()
 		half_width = width * 0.5
 		half_height = height * 0.5
+		scale = min(half_height, half_width)
 
 		m = model.Model()
 		m.read_from_file('./obj/african_head.obj')
@@ -42,11 +48,11 @@ class MainWnd(QtWidgets.QWidget):
 			for i in range(3):
 				v0 = verts[face[i]]
 				v1 = verts[face[(i + 1) % 3]]
-				x0 = v0.x * half_height
-				y0 = v0.y * half_height
-				x1 = v1.x * half_height
-				y1 = v1.y * half_height
-				line(x0, y0, x1, y1, qp, rebase_center=(half_width, half_height))
+				x0 = v0.x * scale
+				y0 = v0.y * scale
+				x1 = v1.x * scale
+				y1 = v1.y * scale
+				line(x0, y0, x1, y1, qp)
 
 
 if __name__ == '__main__':

@@ -4,18 +4,11 @@ from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt
 
 
-def line(x0: int, y0: int, x1: int, y1: int, qp: QPainter, rebase_center=None):
-	if not rebase_center:
-		x0 = int(x0)
-		y0 = int(y0)
-		x1 = int(x1)
-		y1 = int(y1)
-	else:
-		half_width, half_height = rebase_center
-		x0 = int(x0 + half_width)
-		y0 = int(half_height - y0)
-		x1 = int(x1 + half_width)
-		y1 = int(half_height - y1)
+def line(x0: int, y0: int, x1: int, y1: int, qp: QPainter):
+	x0 = int(x0)
+	y0 = int(y0)
+	x1 = int(x1)
+	y1 = int(y1)
 
 	if abs(x0 - x1) < abs(y0 - y1):  # 保证斜率小于1
 		steep = True
