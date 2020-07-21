@@ -22,6 +22,12 @@ class Vec2(object):
 	def __mul__(self, other):
 		return Vec2(self.x * other, self.y * other)
 
+	def cross2d(self, o):
+		return self.x * o.y - self.y * o.x
+
+	def dot2d(self, o):
+		return self.x * o.x + self.y * o.y
+
 	@property
 	def u(self):
 		return self.x
@@ -66,11 +72,11 @@ class Vec3(object):
 	def cross(self, v):
 		return Vec3(self.y * v.z - self.z * v.y, self.z * v.x - self.x * v.z, self.x * v.y - self.y * v.x)
 
-	def norm(self):
+	def length(self):
 		return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z + 0.0)
 
 	def normalize(self):
-		inv_norm = 1.0 / self.norm()
+		inv_norm = 1.0 / self.length()
 		self.x *= inv_norm
 		self.y *= inv_norm
 		self.z *= inv_norm

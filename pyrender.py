@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+from typing import List, Tuple
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt
+import math3d
+from math3d import Vec2, Vec3
 
 
 def line(x0: int, y0: int, x1: int, y1: int, qp: QPainter):
@@ -41,3 +44,31 @@ def line(x0: int, y0: int, x1: int, y1: int, qp: QPainter):
 		if error2 > dx:
 			y += ddy
 			error2 -= dx * 2
+
+
+def is_inside_triangle(pt0: Vec2, pt1: Vec2, pt2: Vec2, px, py) -> bool:
+	pa_x = pt0.x - px
+	pa_y = pt0.y - py
+	pb_x = pt1.x - px
+	pb_y = pt1.y - py
+	pc_x = pt2.x - px
+	pc_y = pt2.y - py
+	t1 = pa_x * pb_y - pa_y * pb_x
+	t2 = pb_x * pc_y - pb_y * pc_x
+	t3 = pc_x * pa_y - pc_y * pa_x
+	return (t1 > 0 and t2 > 0 and t3 > 0) or (t1 < 0 and t2 < 0 and t3 < 0)
+
+
+def triangle(pt0, pt1, pt2, qp: QPainter, size: Tuple[int, int]):
+	half_width, half_height = size
+	bbox_min_x = int(max(-half_width, min(pt0.x, min(pt1.x, pt2.x))))
+	bbox_min_y = int(max(-half_height, min(pt0.y, min(pt1.y, pt2.y))))
+	bbox_max_x = int(min(half_width, max(pt0.x, max(pt1.x, pt2.x))))
+	bbox_max_y = int(min(half_height, max(pt0.y, max(pt1.y, pt2.y))))
+
+	drawPoint = qp.drawPoint
+	for x in range(bbox_min_x, bbox_max_x + 1):
+		for y in range(bbox_min_y, bbox_max_y + 1):
+			is_in = is_inside_triangle(pt0, pt1, pt2, x, y)
+			if is_in:
+				drawPoint(x, y)
