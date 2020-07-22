@@ -72,3 +72,28 @@ def triangle(pt0, pt1, pt2, qp: QPainter, size: Tuple[int, int]):
 			is_in = is_inside_triangle(pt0, pt1, pt2, x, y)
 			if is_in:
 				drawPoint(x, y)
+
+
+def barycentric(pts: List[Vec2], px, py) -> Vec3:
+	p1 = Vec3(pts[2].x - pts[0].x, pts[1].x - pts[0].x, pts[0].x - px)
+	p2 = Vec3(pts[2].y - pts[0].y, pts[1].y - pts[0].y, pts[0].y - py)
+	u = p1.cross(p2)
+	return Vec3(1 - (u.x + u.y)/u.z, u.y / u.z, u.x / u.z)
+
+
+def triangle_by_barycentric(pt0, pt1, pt2, zbuffer: List[List[int]], qp: QPainter, size: Tuple[int, int]):
+	half_width, half_height = size
+	bbox_min_x = int(max(-half_width, min(pt0.x, min(pt1.x, pt2.x))))
+	bbox_min_y = int(max(-half_height, min(pt0.y, min(pt1.y, pt2.y))))
+	bbox_max_x = int(min(half_width, max(pt0.x, max(pt1.x, pt2.x))))
+	bbox_max_y = int(min(half_height, max(pt0.y, max(pt1.y, pt2.y))))
+
+	for x in range(bbox_min_x, bbox_max_x + 1):
+		for y in range(bbox_min_y, bbox_max_y + 1):
+			bc = barycentric([pt0, pt1, pt2], x, y)
+			if bc.x < 0 or bc.y < 0 or bc.z < 0:
+				continue
+			z = bc.x * pt0.z + bc.y * pt1.z + bc.z * pt2.z
+			if zbuffer[x + half_width + (y + half_height) * half_width * 2] < z:
+				zbuffer[x + half_width + (y + half_height) * half_width * 2] = z
+				qp.drawPoint(x, y)

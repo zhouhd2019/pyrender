@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import random
+import math
 import sys
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtGui import QPainter, QColor
@@ -39,14 +40,47 @@ class MainWnd(QtWidgets.QWidget):
 	def draw(self, qp: QPainter) -> None:
 		# self.lesson_1(qp)
 		# self.lesson_2_1(qp)
-		self.lesson_2_2(qp)
+		# self.lesson_2_2(qp)
+		self.lesson_3(qp)
+
+	def lesson_3(self, qp: QPainter):
+		size = self.size()
+		width = size.width()
+		height = size.height()
+		half_width = int(width * 0.5)
+		half_height = int(height * 0.5)
+		scale = min(half_height, half_width)
+		zbuffer = [-9999] * (width * height)
+
+		m = model.Model()
+		m.read_from_file('./obj/african_head.obj')
+
+		light_dir = Vec3(0, 0, -1)
+
+		triangle = pyrender.triangle_by_barycentric
+		for i in range(len(m.faces)):
+			face = m.faces[i]
+			pt0 = m.verts[face[0]] * scale
+			pt1 = m.verts[face[1]] * scale
+			pt2 = m.verts[face[2]] * scale
+
+			p01 = pt1 - pt0
+			p02 = pt2 - pt0
+			normal = p02.cross(p01)
+			normal.normalize()
+			intensity = normal.dot(light_dir)
+			if intensity < 0:
+				continue
+			c = int(255 * intensity)
+			qp.setPen(QColor(c, c, c))
+			triangle(pt0, pt1, pt2, zbuffer, qp, (half_width, half_height))
 
 	def lesson_2_2(self, qp: QPainter) -> None:
 		size = self.size()
 		width = size.width()
 		height = size.height()
-		half_width = width * 0.5
-		half_height = height * 0.5
+		half_width = int(width * 0.5)
+		half_height = int(height * 0.5)
 		scale = min(half_height, half_width)
 
 		m = model.Model()
@@ -80,15 +114,17 @@ class MainWnd(QtWidgets.QWidget):
 		size = self.size()
 		width = size.width()
 		height = size.height()
-		pyrender.triangle(pt0, pt1, pt2, qp, (width, height))
+		half_width = int(width * 0.5)
+		half_height = int(height * 0.5)
+		pyrender.triangle(pt0, pt1, pt2, qp, (half_width, half_height))
 
 	def lesson_1(self, qp: QPainter):
 		qp.setPen(Qt.blue)
 		size = self.size()
 		width = size.width()
 		height = size.height()
-		half_width = width * 0.5
-		half_height = height * 0.5
+		half_width = int(width * 0.5)
+		half_height = int(height * 0.5)
 		scale = min(half_height, half_width)
 
 		m = model.Model()
