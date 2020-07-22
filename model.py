@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import math3d
-from math3d import Vec3
+from math3d import Vec3, Vec2
 
 
 class Model(object):
 	def __init__(self):
 		self.verts = [Vec3(), ]
+		self.vtex = [Vec2(), ]
+
 		self.faces = []
 
 	def __str__(self):
@@ -28,13 +30,15 @@ class Model(object):
 	def read_face(self, words):
 		verts = []
 		for w in words[1:]:
-			verts.append(int(w.split('/')[0]))
+			v, vt = w.split('/')[:2]
+			verts.append((int(v), int(vt)))
 		self.faces.append(verts)
 
 
 MODEL_READ_FUNC = {
 	'v': lambda self, words: self.verts.append(Vec3(float(words[1]), float(words[2]), float(words[3]))),
 	'f': Model.read_face,
+	'vt': lambda self, words: self.vtex.append(Vec2(float(words[1]), float(words[2]))),
 }
 
 

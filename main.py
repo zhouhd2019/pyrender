@@ -5,6 +5,7 @@ import sys
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtGui import QPainter, QColor
 from PyQt5.QtCore import Qt
+from PIL import Image
 import main_ui
 import pyrender
 import model
@@ -49,31 +50,19 @@ class MainWnd(QtWidgets.QWidget):
 		height = size.height()
 		half_width = int(width * 0.5)
 		half_height = int(height * 0.5)
-		scale = min(half_height, half_width)
+		scale = min(half_height, half_width) + 0.0
 		zbuffer = [-9999] * (width * height)
 
 		m = model.Model()
 		m.read_from_file('./obj/african_head.obj')
+		tex = Image.open('./obj/african_head_diffuse.tga')
+		tex = tex.transpose(Image.FLIP_TOP_BOTTOM)
 
 		light_dir = Vec3(0, 0, -1)
 
 		triangle = pyrender.triangle_by_barycentric
 		for i in range(len(m.faces)):
-			face = m.faces[i]
-			pt0 = m.verts[face[0]] * scale
-			pt1 = m.verts[face[1]] * scale
-			pt2 = m.verts[face[2]] * scale
-
-			p01 = pt1 - pt0
-			p02 = pt2 - pt0
-			normal = p02.cross(p01)
-			normal.normalize()
-			intensity = normal.dot(light_dir)
-			if intensity < 0:
-				continue
-			c = int(255 * intensity)
-			qp.setPen(QColor(c, c, c))
-			triangle(pt0, pt1, pt2, zbuffer, qp, (half_width, half_height))
+			triangle(m, i, scale, zbuffer, qp, (half_width, half_height), light_dir, tex)
 
 	def lesson_2_2(self, qp: QPainter) -> None:
 		size = self.size()
@@ -81,7 +70,7 @@ class MainWnd(QtWidgets.QWidget):
 		height = size.height()
 		half_width = int(width * 0.5)
 		half_height = int(height * 0.5)
-		scale = min(half_height, half_width)
+		scale = min(half_height, half_width) + 0.0
 
 		m = model.Model()
 		m.read_from_file('./obj/african_head.obj')
@@ -91,9 +80,9 @@ class MainWnd(QtWidgets.QWidget):
 		triangle = pyrender.triangle
 		for i in range(len(m.faces)):
 			face = m.faces[i]
-			pt0 = m.verts[face[0]] * scale
-			pt1 = m.verts[face[1]] * scale
-			pt2 = m.verts[face[2]] * scale
+			pt0 = m.verts[face[0][0]] * scale
+			pt1 = m.verts[face[1][0]] * scale
+			pt2 = m.verts[face[2][0]] * scale
 
 			p01 = pt1 - pt0
 			p02 = pt2 - pt0
@@ -125,7 +114,7 @@ class MainWnd(QtWidgets.QWidget):
 		height = size.height()
 		half_width = int(width * 0.5)
 		half_height = int(height * 0.5)
-		scale = min(half_height, half_width)
+		scale = min(half_height, half_width) + 0.0
 
 		m = model.Model()
 		m.read_from_file('./obj/african_head.obj')
@@ -134,8 +123,8 @@ class MainWnd(QtWidgets.QWidget):
 		verts = m.verts
 		for face in m.faces:
 			for i in range(3):
-				v0 = verts[face[i]]
-				v1 = verts[face[(i + 1) % 3]]
+				v0 = verts[face[i][0]]
+				v1 = verts[face[(i + 1) % 3][0]]
 				v0 = v0 * scale
 				v1 = v1 * scale
 				line(v0.x, v0.y, v1.x, v1.y, qp)
