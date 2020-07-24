@@ -5,7 +5,7 @@ from PyQt5.QtGui import QPainter, QColor
 from PyQt5.QtCore import Qt
 from PIL import Image
 import math3d
-from math3d import Vec2, Vec3
+from math3d import Vec2, Vec3, Mat4x4
 
 
 def line(x0: int, y0: int, x1: int, y1: int, qp: QPainter):
@@ -60,7 +60,7 @@ def is_inside_triangle(pt0: Vec2, pt1: Vec2, pt2: Vec2, px, py) -> bool:
 	return (t1 > 0 and t2 > 0 and t3 > 0) or (t1 < 0 and t2 < 0 and t3 < 0)
 
 
-def triangle(pt0, pt1, pt2, qp: QPainter, size: Tuple[int, int]):
+def triangle2(pt0, pt1, pt2, qp: QPainter, size: Tuple[int, int]):
 	half_width, half_height = size
 	bbox_min_x = int(max(-half_width, min(pt0.x, min(pt1.x, pt2.x))))
 	bbox_min_y = int(max(-half_height, min(pt0.y, min(pt1.y, pt2.y))))
@@ -82,7 +82,7 @@ def barycentric(pts: List[Vec2], px, py) -> Vec3:
 	return Vec3(1 - (u.x + u.y)/u.z, u.y / u.z, u.x / u.z)
 
 
-def triangle_by_barycentric(model, idx, scale, zbuffer, qp: QPainter, size: Tuple[int, int], light_dir, tex: Image):
+def triangle3(model, idx, scale, zbuffer, qp: QPainter, size: Tuple[int, int], light_dir, tex: Image):
 	face = model.faces[idx]
 	pt0 = model.verts[face[0][0]] * scale
 	pt1 = model.verts[face[1][0]] * scale
@@ -115,6 +115,53 @@ def triangle_by_barycentric(model, idx, scale, zbuffer, qp: QPainter, size: Tupl
 			z = bc.x * pt0.z + bc.y * pt1.z + bc.z * pt2.z
 			if zbuffer[x + half_width + (y + half_height) * half_width * 2] < z:
 				zbuffer[x + half_width + (y + half_height) * half_width * 2] = z
+				u = int((bc.x * uv0.x + bc.y * uv1.x + bc.z * uv2.x) * tex_width)
+				v = int((bc.x * uv0.y + bc.y * uv1.y + bc.z * uv2.y) * tex_height)
+				pix = tex.getpixel((u, v))
+				qp.setPen(QColor(*pix))
+				qp.drawPoint(x, y)
+
+
+def triangle4(model, idx, mv: Mat4x4, proj_vp: Mat4x4, width, height, zbuffer, qp: QPainter, light_dir, tex: Image):
+	face = model.faces[idx]
+	pt0 = model.verts[face[0][0]]
+	pt1 = model.verts[face[1][0]]
+	pt2 = model.verts[face[2][0]]
+
+	pt0 = mv.mul_vec3(pt0)
+	pt1 = mv.mul_vec3(pt1)
+	pt2 = mv.mul_vec3(pt2)
+
+	p01 = pt1 - pt0
+	p02 = pt2 - pt0
+	normal = p02.cross(p01)
+	normal.normalize()
+	intensity = normal.dot(light_dir)
+	if intensity < 0:
+		return
+
+	pt0 = proj_vp.mul_vec3(pt0)
+	pt1 = proj_vp.mul_vec3(pt1)
+	pt2 = proj_vp.mul_vec3(pt2)
+
+	bbox_min_x = int(max(0, min(pt0.x, min(pt1.x, pt2.x))))
+	bbox_min_y = int(max(0, min(pt0.y, min(pt1.y, pt2.y))))
+	bbox_max_x = int(min(width, max(pt0.x, max(pt1.x, pt2.x))))
+	bbox_max_y = int(min(height, max(pt0.y, max(pt1.y, pt2.y))))
+
+	uv0 = model.vtex[face[0][1]]
+	uv1 = model.vtex[face[1][1]]
+	uv2 = model.vtex[face[2][1]]
+	tex_width, tex_height = tex.size
+
+	for x in range(bbox_min_x, bbox_max_x + 1):
+		for y in range(bbox_min_y, bbox_max_y + 1):
+			bc = barycentric([pt0, pt1, pt2], x, y)
+			if bc.x < 0 or bc.y < 0 or bc.z < 0:
+				continue
+			z = bc.x * pt0.z + bc.y * pt1.z + bc.z * pt2.z
+			if zbuffer[x + y * width] < z:
+				zbuffer[x + y * width] = z
 				u = int((bc.x * uv0.x + bc.y * uv1.x + bc.z * uv2.x) * tex_width)
 				v = int((bc.x * uv0.y + bc.y * uv1.y + bc.z * uv2.y) * tex_height)
 				pix = tex.getpixel((u, v))
