@@ -142,6 +142,7 @@ class Mat4x4(object):
 		w = ele[12] * v3x + ele[13] * v3y + ele[14] * v3z + ele[15]
 		if w == 0:
 			traceback.print_stack()
+			print('w error')
 			return Vec3(math.inf, math.inf, math.inf)
 		else:
 			return Vec3(x / w, y / w, z / w)
@@ -152,21 +153,22 @@ def look_at(eye: Vec3, center: Vec3, up: Vec3):
 	x = up.cross(z).normalize()
 	y = z.cross(x).normalize()
 	view = Mat4x4().identity()
-
+	tr = Mat4x4().identity()
 	for i in range(3):
 		view[i] = x[i]
 		view[4 + i] = y[i]
 		view[8 + i] = z[i]
-	return view
+		tr[i * 4 + 3] = center[i] - eye[i]
+	return tr * view
 
 
 def perspective(fov, ratio, near, far):
 	mat = Mat4x4()
-	mat[5] = ratio * math.tan(fov * 0.5)
-	mat[0] = 1.0 / mat[5]
-	mat[10] = far / (far - near + 0.0)
-	mat[11] = far * near / (near - far + 0.0)
-	mat[14] = 1
+	mat[5] = 1.0 / math.tan(fov * 0.5)
+	mat[0] = mat[5] / ratio
+	mat[10] = far / (far - near)
+	mat[14] = far * near / (near - far)
+	mat[11] = 1
 	return mat
 
 
@@ -174,6 +176,8 @@ def viewport(w, h):
 	mat = Mat4x4().identity()
 	mat[3] = w * 0.5
 	mat[7] = h * 0.5
+	mat[11] = 127.5
 	mat[0] = w * 0.5
 	mat[5] = h * 0.5
+	mat[10] = 127.5
 	return mat

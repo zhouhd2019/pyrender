@@ -37,25 +37,24 @@ class MainWnd(QtWidgets.QWidget):
 		# self.lesson_1(qp)
 		# self.lesson_2_1(qp)
 		# self.lesson_2_2(qp)
-		self.lesson_3(qp)
-		# self.lesson_4(qp)
+		# self.lesson_3(qp)
+		self.lesson_4(qp)
 
-	def lesson_4_2(self, qp: QPainter):
+	def lesson_4(self, qp: QPainter):
 		size = self.size()
 		width = size.width()
 		height = size.height()
+		qp.translate(0, height)
 		qp.scale(1, -1)
 
 		zbuffer = [-9999] * ((width + 1) * (height + 1))
 
 		# model_mat = Mat4x4()
 		# model_mat.identity()
-		view_mat = math3d.look_at(Vec3(0, 0, 10), Vec3(0, 0, 0), Vec3(0, 1, 0))
-		mv = view_mat
-
-		proj_mat = math3d.perspective(60.0, 4.0 / 3, 1.0, -20.0)
+		view_mat = math3d.look_at(Vec3(0, 0, 4), Vec3(0, 0, 0), Vec3(0, 1, 0))
+		proj_mat = math3d.perspective(1.05, 4.0 / 3, 1.0, -1.0)
 		vp = math3d.viewport(width, height)
-		proj_vp = vp * proj_mat
+		mvpvp = vp * proj_mat * view_mat
 
 		m = model.Model()
 		m.read_from_file('./obj/african_head.obj')
@@ -65,8 +64,8 @@ class MainWnd(QtWidgets.QWidget):
 		light_dir = Vec3(0, 0, -1)
 
 		triangle = pyrender.triangle4
-		for i in range(500):#range(len(m.faces)):
-			triangle(m, i, mv, proj_vp, width, height, zbuffer, qp, light_dir, tex)
+		for i in range(len(m.faces)):
+			triangle(m, i, mvpvp, width, height, zbuffer, qp, light_dir, tex)
 
 	def lesson_3(self, qp: QPainter):
 		size = self.size()
@@ -78,7 +77,7 @@ class MainWnd(QtWidgets.QWidget):
 		half_width = int(width * 0.5)
 		half_height = int(height * 0.5)
 		scale = min(half_height, half_width) + 0.0
-		zbuffer = [-9999] * (width * height)
+		zbuffer = [-9999] * ((width + 1) * (height + 1))
 
 		m = model.Model()
 		m.read_from_file('./obj/african_head.obj')
@@ -168,7 +167,7 @@ class MainWnd(QtWidgets.QWidget):
 
 
 if __name__ == '__main__':
-	NO_PROFILE = 0
+	NO_PROFILE = 1
 	if NO_PROFILE:
 		app = QtWidgets.QApplication(sys.argv)
 		wnd = MainWnd()

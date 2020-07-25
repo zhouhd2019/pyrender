@@ -115,22 +115,18 @@ def triangle3(model, idx, scale, zbuffer, qp: QPainter, size: Tuple[int, int], l
 			z = bc.x * pt0.z + bc.y * pt1.z + bc.z * pt2.z
 			if zbuffer[x + half_width + (y + half_height) * half_width * 2] < z:
 				zbuffer[x + half_width + (y + half_height) * half_width * 2] = z
-				u = int((bc.x * uv0.x + bc.y * uv1.x + bc.z * uv2.x) * tex_width)
-				v = int((bc.x * uv0.y + bc.y * uv1.y + bc.z * uv2.y) * tex_height)
+				u = min(tex_width - 1, max(0, int((bc.x * uv0.x + bc.y * uv1.x + bc.z * uv2.x) * tex_width)))
+				v = min(tex_width - 1, max(0, int((bc.x * uv0.y + bc.y * uv1.y + bc.z * uv2.y) * tex_height)))
 				pix = tex.getpixel((u, v))
 				qp.setPen(QColor(*pix))
 				qp.drawPoint(x, y)
 
 
-def triangle4(model, idx, mv: Mat4x4, proj_vp: Mat4x4, width, height, zbuffer, qp: QPainter, light_dir, tex: Image):
+def triangle4(model, idx, mvpvp: Mat4x4, width, height, zbuffer, qp: QPainter, light_dir, tex: Image):
 	face = model.faces[idx]
 	pt0 = model.verts[face[0][0]]
 	pt1 = model.verts[face[1][0]]
 	pt2 = model.verts[face[2][0]]
-
-	pt0 = mv.mul_vec3(pt0)
-	pt1 = mv.mul_vec3(pt1)
-	pt2 = mv.mul_vec3(pt2)
 
 	p01 = pt1 - pt0
 	p02 = pt2 - pt0
@@ -140,9 +136,9 @@ def triangle4(model, idx, mv: Mat4x4, proj_vp: Mat4x4, width, height, zbuffer, q
 	if intensity < 0:
 		return
 
-	pt0 = proj_vp.mul_vec3(pt0)
-	pt1 = proj_vp.mul_vec3(pt1)
-	pt2 = proj_vp.mul_vec3(pt2)
+	pt0 = mvpvp.mul_vec3(pt0)
+	pt1 = mvpvp.mul_vec3(pt1)
+	pt2 = mvpvp.mul_vec3(pt2)
 
 	bbox_min_x = int(max(0, min(pt0.x, min(pt1.x, pt2.x))))
 	bbox_min_y = int(max(0, min(pt0.y, min(pt1.y, pt2.y))))
@@ -162,8 +158,8 @@ def triangle4(model, idx, mv: Mat4x4, proj_vp: Mat4x4, width, height, zbuffer, q
 			z = bc.x * pt0.z + bc.y * pt1.z + bc.z * pt2.z
 			if zbuffer[x + y * width] < z:
 				zbuffer[x + y * width] = z
-				u = int((bc.x * uv0.x + bc.y * uv1.x + bc.z * uv2.x) * tex_width)
-				v = int((bc.x * uv0.y + bc.y * uv1.y + bc.z * uv2.y) * tex_height)
+				u = min(tex_width - 1, max(0, int((bc.x * uv0.x + bc.y * uv1.x + bc.z * uv2.x) * tex_width)))
+				v = min(tex_width - 1, max(0, int((bc.x * uv0.y + bc.y * uv1.y + bc.z * uv2.y) * tex_height)))
 				pix = tex.getpixel((u, v))
-				qp.setPen(QColor(*pix))
+				qp.setPen(QColor(*[i * intensity for i in pix]))
 				qp.drawPoint(x, y)
