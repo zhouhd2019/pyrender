@@ -11,6 +11,7 @@ import pyrender
 import model
 import math3d
 from math3d import Vec2, Vec3, Mat4x4
+import pipeline
 
 
 class MainWnd(QtWidgets.QWidget):
@@ -20,6 +21,10 @@ class MainWnd(QtWidgets.QWidget):
 		self.ui = main_ui.Ui_Form()
 		self.ui.setupUi(self)
 		self.setWindowTitle("render")
+		palette = QtGui.QPalette()
+		palette.setColor(self.backgroundRole(), Qt.black)
+		self.setPalette(palette)
+		self.setAutoFillBackground(True)
 		self.show()
 
 	def paintEvent(self, a0: QtGui.QPaintEvent) -> None:
@@ -38,7 +43,32 @@ class MainWnd(QtWidgets.QWidget):
 		# self.lesson_2_1(qp)
 		# self.lesson_2_2(qp)
 		# self.lesson_3(qp)
-		self.lesson_4(qp)
+		# self.lesson_4(qp)
+		self.lesson_6_1(qp)
+
+	def lesson_6_1(self, qp: QPainter):
+		size = self.size()
+		width = size.width()
+		height = size.height()
+		qp.translate(0, height)
+		qp.scale(1, -1)
+
+		zbuffer = [-9999] * ((width + 1) * (height + 1))
+
+		# model_mat = Mat4x4()
+		# model_mat.identity()
+		view_mat = math3d.look_at(Vec3(0, 0, 4), Vec3(0, 0, 0), Vec3(0, 1, 0))
+		proj_mat = math3d.perspective(1.05, 4.0 / 3, 1.0, -1.0)
+		vp = math3d.viewport(width, height)
+		mvpvp = vp * proj_mat * view_mat
+
+		m = model.Model()
+		m.read_from_file('./obj/african_head.obj', './obj/african_head_diffuse.tga')
+
+		light_dir = Vec3(0, 0, 1)
+
+		shader = pipeline.L61GouraudShader(m, light_dir, mvpvp, qp, zbuffer, width, height)
+		shader.render()
 
 	def lesson_4(self, qp: QPainter):
 		size = self.size()
@@ -61,7 +91,7 @@ class MainWnd(QtWidgets.QWidget):
 		tex = Image.open('./obj/african_head_diffuse.tga')
 		tex = tex.transpose(Image.FLIP_TOP_BOTTOM)
 
-		light_dir = Vec3(0, 0, -1)
+		light_dir = Vec3(0, 0, 1)
 
 		triangle = pyrender.triangle4
 		for i in range(len(m.faces)):
@@ -84,7 +114,7 @@ class MainWnd(QtWidgets.QWidget):
 		tex = Image.open('./obj/african_head_diffuse.tga')
 		tex = tex.transpose(Image.FLIP_TOP_BOTTOM)
 
-		light_dir = Vec3(0, 0, -1)
+		light_dir = Vec3(0, 0, 1)
 
 		triangle = pyrender.triangle3
 		for i in range(len(m.faces)):
@@ -104,7 +134,7 @@ class MainWnd(QtWidgets.QWidget):
 		m = model.Model()
 		m.read_from_file('./obj/african_head.obj')
 
-		light_dir = Vec3(0, 0, -1)
+		light_dir = Vec3(0, 0, 1)
 
 		triangle = pyrender.triangle2
 		for i in range(len(m.faces)):
@@ -115,7 +145,7 @@ class MainWnd(QtWidgets.QWidget):
 
 			p01 = pt1 - pt0
 			p02 = pt2 - pt0
-			normal = p02.cross(p01)
+			normal = p01.cross(p02)
 			normal.normalize()
 			intensity = normal.dot(light_dir)
 			if intensity < 0:

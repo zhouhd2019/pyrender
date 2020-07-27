@@ -62,6 +62,19 @@ class Vec3(object):
 			return self.y
 		elif item == 2:
 			return self.z
+		raise NotImplementedError(item)
+
+	def __setitem__(self, key, value):
+		if key == 0:
+			self.x = value
+			return
+		elif key == 1:
+			self.y = value
+			return
+		elif key == 2:
+			self.z = value
+			return
+		raise NotImplementedError(key, value)
 
 	def dot(self, other):
 		return self.x * other.x + self.y * other.y + self.z * other.z
@@ -78,6 +91,64 @@ class Vec3(object):
 		self.y *= inv_norm
 		self.z *= inv_norm
 		return self
+
+
+class Vec4(object):
+	__slots__ = ('x', 'y', 'z', 'w')
+
+	def __init__(self, x=0.0, y=0.0, z=0.0, w=0.0):
+		self.x = x
+		self.y = y
+		self.z = z
+		self.w = w
+
+	def __str__(self):
+		return "({0}, {1}, {2}, {3})".format(self.x, self.y, self.z, self.w)
+
+	def __repr__(self):
+		return str(self)
+
+	def __add__(self, other):
+		return Vec4(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
+
+	def __sub__(self, other):
+		return Vec4(self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w)
+
+	def __mul__(self, other):
+		return Vec4(self.x * other, self.y * other, self.z * other, self.w * other)
+
+	def __getitem__(self, item):
+		if item == 0:
+			return self.x
+		elif item == 1:
+			return self.y
+		elif item == 2:
+			return self.z
+		elif item == 3:
+			return self.w
+		raise NotImplementedError(item)
+
+	def __setitem__(self, key, value):
+		if key == 0:
+			self.x = value
+			return
+		elif key == 1:
+			self.y = value
+			return
+		elif key == 2:
+			self.z = value
+			return
+		elif key == 3:
+			self.w = value
+			return
+		raise NotImplementedError(key, value)
+
+	def dot(self, other):
+		return self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
+
+	def to_vec3(self):
+		w = self.w + 0.0
+		return Vec3(self.x / w, self.y / w, self.z / w)
 
 
 class Mat4x4(object):
@@ -146,6 +217,18 @@ class Mat4x4(object):
 			return Vec3(math.inf, math.inf, math.inf)
 		else:
 			return Vec3(x / w, y / w, z / w)
+
+	def mul_vec4(self, v4):
+		ele = self.ele
+		v4x = v4.x
+		v4y = v4.y
+		v4z = v4.z
+		v4w = v4.w
+		x = ele[0] * v4x + ele[1] * v4y + ele[2] * v4z + ele[3] * v4w
+		y = ele[4] * v4x + ele[5] * v4y + ele[6] * v4z + ele[7] * v4w
+		z = ele[8] * v4x + ele[9] * v4y + ele[10] * v4z + ele[11] * v4w
+		w = ele[12] * v4x + ele[13] * v4y + ele[14] * v4z + ele[15] * v4w
+		return Vec4(x, y, z, w)
 
 
 def look_at(eye: Vec3, center: Vec3, up: Vec3):

@@ -5,7 +5,8 @@ from PyQt5.QtGui import QPainter, QColor
 from PyQt5.QtCore import Qt
 from PIL import Image
 import math3d
-from math3d import Vec2, Vec3, Mat4x4
+from math3d import Vec2, Vec3, Mat4x4, Vec4
+import pipeline
 
 
 def line(x0: int, y0: int, x1: int, y1: int, qp: QPainter):
@@ -90,7 +91,7 @@ def triangle3(model, idx, scale, zbuffer, qp: QPainter, size: Tuple[int, int], l
 
 	p01 = pt1 - pt0
 	p02 = pt2 - pt0
-	normal = p02.cross(p01)
+	normal = p01.cross(p02)
 	normal.normalize()
 	intensity = normal.dot(light_dir)
 	if intensity < 0:
@@ -130,7 +131,7 @@ def triangle4(model, idx, mvpvp: Mat4x4, width, height, zbuffer, qp: QPainter, l
 
 	p01 = pt1 - pt0
 	p02 = pt2 - pt0
-	normal = p02.cross(p01)
+	normal = p01.cross(p02)
 	normal.normalize()
 	intensity = normal.dot(light_dir)
 	if intensity < 0:
@@ -162,4 +163,47 @@ def triangle4(model, idx, mvpvp: Mat4x4, width, height, zbuffer, qp: QPainter, l
 				v = min(tex_width - 1, max(0, int((bc.x * uv0.y + bc.y * uv1.y + bc.z * uv2.y) * tex_height)))
 				pix = tex.getpixel((u, v))
 				qp.setPen(QColor(*[i * intensity for i in pix]))
+				# qp.setPen(QColor(intensity * 255, intensity * 255, intensity * 255))
+				qp.drawPoint(x, y)
+
+
+def pre_barycentric(pts):
+	p1x = pts[2].x - pts[0].x
+	p1y = pts[1].x - pts[0].x
+	p2x = pts[2].y - pts[0].y
+	p2y = pts[1].y - pts[0].y
+
+	def func(px, py):
+		p1 = Vec3(p1x, p1y, pts[0].x - px)
+		p2 = Vec3(p2x, p2y, pts[0].y - py)
+		u = p1.cross(p2)
+		return Vec3(1 - (u.x + u.y)/u.z, u.y / u.z, u.x / u.z)
+	return func
+
+
+def triangle61(screen_coords: List[Vec3], shader, qp: QPainter, zbuffer: List[float], size: (int, int)):
+	width, height = size
+
+	pt0 = screen_coords[0]
+	pt1 = screen_coords[1]
+	pt2 = screen_coords[2]
+
+	bbox_min_x = int(max(0, min(pt0.x, min(pt1.x, pt2.x))))
+	bbox_min_y = int(max(0, min(pt0.y, min(pt1.y, pt2.y))))
+	bbox_max_x = int(min(width, max(pt0.x, max(pt1.x, pt2.x))))
+	bbox_max_y = int(min(height, max(pt0.y, max(pt1.y, pt2.y))))
+
+	bary = pre_barycentric([pt0, pt1, pt2])
+	for x in range(bbox_min_x, bbox_max_x + 1):
+		for y in range(bbox_min_y, bbox_max_y + 1):
+			bc = bary(x, y)
+			if bc.x < 0 or bc.y < 0 or bc.z < 0:
+				continue
+			z = bc.x * pt0.z + bc.y * pt1.z + bc.z * pt2.z
+			if zbuffer[x + y * width] > z:
+				continue
+			zbuffer[x + y * width] = z
+			bOK, color = shader.fragment(bc)
+			if bOK:
+				qp.setPen(QColor(*color))
 				qp.drawPoint(x, y)
