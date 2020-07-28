@@ -181,7 +181,7 @@ def pre_barycentric(pts):
 	return func
 
 
-def triangle61(screen_coords: List[Vec3], shader, qp: QPainter, zbuffer: List[float], size: (int, int)):
+def triangle6(screen_coords: List[Vec3], fragment, qp: QPainter, zbuffer: List[float], size: (int, int)):
 	width, height = size
 
 	pt0 = screen_coords[0]
@@ -203,7 +203,7 @@ def triangle61(screen_coords: List[Vec3], shader, qp: QPainter, zbuffer: List[fl
 			if zbuffer[x + y * width] > z:
 				continue
 			zbuffer[x + y * width] = z
-			bOK, color = shader.fragment(bc)
+			bOK, color = fragment(bc)
 			if bOK:
-				qp.setPen(QColor(*color))
+				qp.setPen(QColor(color.x, color.y, color.z))
 				qp.drawPoint(x, y)

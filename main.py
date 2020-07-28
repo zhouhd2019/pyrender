@@ -44,7 +44,30 @@ class MainWnd(QtWidgets.QWidget):
 		# self.lesson_2_2(qp)
 		# self.lesson_3(qp)
 		# self.lesson_4(qp)
-		self.lesson_6_1(qp)
+		# self.lesson_6_1(qp)
+		self.lesson_6_2(qp)
+
+	def lesson_6_2(self, qp: QPainter):
+		size = self.size()
+		width = size.width()
+		height = size.height()
+		qp.translate(0, height)
+		qp.scale(1, -1)
+		zbuffer = [-9999] * ((width + 1) * (height + 1))
+
+		view_mat = math3d.look_at(Vec3(0, 0, 2.5), Vec3(0, 0, 0), Vec3(0, 1, 0))
+		proj_mat = math3d.perspective(1.5, 4.0 / 3, 1.0, -1.0)
+		vp = math3d.viewport(width, height)
+		mvpvp = vp * proj_mat * view_mat
+
+		m = model.Model()
+		m.read_from_file('./obj/african_head.obj', diffuse_file='./obj/african_head_diffuse.tga',
+						normal_file='./obj/african_head_nm_tangent.tga')
+
+		light_dir = Vec3(0, 0, 1)
+
+		shader = pipeline.L62NormalMapping(m, light_dir, mvpvp, qp, zbuffer, width, height)
+		shader.render()
 
 	def lesson_6_1(self, qp: QPainter):
 		size = self.size()
@@ -63,7 +86,7 @@ class MainWnd(QtWidgets.QWidget):
 		mvpvp = vp * proj_mat * view_mat
 
 		m = model.Model()
-		m.read_from_file('./obj/african_head.obj', './obj/african_head_diffuse.tga')
+		m.read_from_file('./obj/african_head.obj', diffuse_file='./obj/african_head_diffuse.tga')
 
 		light_dir = Vec3(0, 0, 1)
 
@@ -204,6 +227,7 @@ if __name__ == '__main__':
 		sys.exit(app.exec_())
 	else:
 		import cProfile, pstats, io
+
 		pr = cProfile.Profile()
 		pr.enable()
 

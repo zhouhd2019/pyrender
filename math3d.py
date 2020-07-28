@@ -218,6 +218,16 @@ class Mat4x4(object):
 		else:
 			return Vec3(x / w, y / w, z / w)
 
+	def mul_vec3_dir(self, v3):
+		ele = self.ele
+		v3x = v3.x
+		v3y = v3.y
+		v3z = v3.z
+		x = ele[0] * v3x + ele[1] * v3y + ele[2] * v3z
+		y = ele[4] * v3x + ele[5] * v3y + ele[6] * v3z
+		z = ele[8] * v3x + ele[9] * v3y + ele[10] * v3z
+		return Vec3(x, y, z).normalize()
+
 	def mul_vec4(self, v4):
 		ele = self.ele
 		v4x = v4.x
@@ -229,6 +239,30 @@ class Mat4x4(object):
 		z = ele[8] * v4x + ele[9] * v4y + ele[10] * v4z + ele[11] * v4w
 		w = ele[12] * v4x + ele[13] * v4y + ele[14] * v4z + ele[15] * v4w
 		return Vec4(x, y, z, w)
+
+	def mat_by_col(self, t, b, n):
+		ele = self.ele
+		ele[0] = t.x
+		ele[1] = b.x
+		ele[2] = n.x
+		ele[4] = t.y
+		ele[5] = b.y
+		ele[6] = n.y
+		ele[8] = t.z
+		ele[9] = b.z
+		ele[10] = n.z
+		ele[15] = 1
+		return self
+
+	def transpose(self):
+		ele = self.ele
+		ele[1], ele[4] = ele[4], ele[1]
+		ele[2], ele[8] = ele[8], ele[2]
+		ele[3], ele[12] = ele[12], ele[3]
+		ele[6], ele[9] = ele[9], ele[6]
+		ele[7], ele[13] = ele[13], ele[7]
+		ele[11], ele[14] = ele[14], ele[11]
+		return self
 
 
 def look_at(eye: Vec3, center: Vec3, up: Vec3):
