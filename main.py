@@ -48,12 +48,7 @@ class MainWnd(QtWidgets.QWidget):
 		self.lesson_6_2(qp)
 
 	def lesson_6_2(self, qp: QPainter):
-		size = self.size()
-		width = size.width()
-		height = size.height()
-		qp.translate(0, height)
-		qp.scale(1, -1)
-		zbuffer = [-9999] * ((width + 1) * (height + 1))
+		size, width, height, zbuffer = self.init(qp)
 
 		view_mat = math3d.look_at(Vec3(0, 0, 2.5), Vec3(0, 0, 0), Vec3(0, 1, 0))
 		proj_mat = math3d.perspective(1.5, 4.0 / 3, 1.0, -1.0)
@@ -70,13 +65,7 @@ class MainWnd(QtWidgets.QWidget):
 		shader.render()
 
 	def lesson_6_1(self, qp: QPainter):
-		size = self.size()
-		width = size.width()
-		height = size.height()
-		qp.translate(0, height)
-		qp.scale(1, -1)
-
-		zbuffer = [-9999] * ((width + 1) * (height + 1))
+		size, width, height, zbuffer = self.init(qp)
 
 		# model_mat = Mat4x4()
 		# model_mat.identity()
@@ -94,13 +83,7 @@ class MainWnd(QtWidgets.QWidget):
 		shader.render()
 
 	def lesson_4(self, qp: QPainter):
-		size = self.size()
-		width = size.width()
-		height = size.height()
-		qp.translate(0, height)
-		qp.scale(1, -1)
-
-		zbuffer = [-9999] * ((width + 1) * (height + 1))
+		size, width, height, zbuffer = self.init(qp)
 
 		# model_mat = Mat4x4()
 		# model_mat.identity()
@@ -121,16 +104,11 @@ class MainWnd(QtWidgets.QWidget):
 			triangle(m, i, mvpvp, width, height, zbuffer, qp, light_dir, tex)
 
 	def lesson_3(self, qp: QPainter):
-		size = self.size()
-		width = size.width()
-		height = size.height()
-		qp.translate(width * 0.5, height * 0.5)
-		qp.scale(1, -1)
+		size, width, height, zbuffer = self.init(qp)
 
 		half_width = int(width * 0.5)
 		half_height = int(height * 0.5)
 		scale = min(half_height, half_width) + 0.0
-		zbuffer = [-9999] * ((width + 1) * (height + 1))
 
 		m = model.Model()
 		m.read_from_file('./obj/african_head.obj')
@@ -141,7 +119,16 @@ class MainWnd(QtWidgets.QWidget):
 
 		triangle = pyrender.triangle3
 		for i in range(len(m.faces)):
-			triangle(m, i, scale, zbuffer, qp, (half_width, half_height), light_dir, tex)
+			triangle(m, i, scale, zbuffer, qp, (width, height), light_dir, tex)
+
+	def init(self, qp: QPainter):
+		size = self.size()
+		width = size.width()
+		height = size.height()
+		qp.translate(0, height)
+		qp.scale(1, -1)
+		zbuffer = [-9999] * ((width + 1) * (height + 1))
+		return size, width, height, zbuffer
 
 	def lesson_2_2(self, qp: QPainter) -> None:
 		size = self.size()

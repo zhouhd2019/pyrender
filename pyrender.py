@@ -84,6 +84,7 @@ def barycentric(pts: List[Vec2], px, py) -> Vec3:
 
 
 def triangle3(model, idx, scale, zbuffer, qp: QPainter, size: Tuple[int, int], light_dir, tex: Image):
+	width, height = size
 	face = model.faces[idx]
 	pt0 = model.verts[face[0][0]] * scale
 	pt1 = model.verts[face[1][0]] * scale
@@ -97,7 +98,8 @@ def triangle3(model, idx, scale, zbuffer, qp: QPainter, size: Tuple[int, int], l
 	if intensity < 0:
 		return
 
-	half_width, half_height = size
+	half_width = int(width * 0.5)
+	half_height = int(height * 0.5)
 	bbox_min_x = int(max(-half_width, min(pt0.x, min(pt1.x, pt2.x))))
 	bbox_min_y = int(max(-half_height, min(pt0.y, min(pt1.y, pt2.y))))
 	bbox_max_x = int(min(half_width, max(pt0.x, max(pt1.x, pt2.x))))
@@ -114,13 +116,13 @@ def triangle3(model, idx, scale, zbuffer, qp: QPainter, size: Tuple[int, int], l
 			if bc.x < 0 or bc.y < 0 or bc.z < 0:
 				continue
 			z = bc.x * pt0.z + bc.y * pt1.z + bc.z * pt2.z
-			if zbuffer[x + half_width + (y + half_height) * half_width * 2] < z:
-				zbuffer[x + half_width + (y + half_height) * half_width * 2] = z
+			if zbuffer[x + half_width + (y + half_height) * width] < z:
+				zbuffer[x + half_width + (y + half_height) * width] = z
 				u = min(tex_width - 1, max(0, int((bc.x * uv0.x + bc.y * uv1.x + bc.z * uv2.x) * tex_width)))
 				v = min(tex_width - 1, max(0, int((bc.x * uv0.y + bc.y * uv1.y + bc.z * uv2.y) * tex_height)))
 				pix = tex.getpixel((u, v))
 				qp.setPen(QColor(*pix))
-				qp.drawPoint(x, y)
+				qp.drawPoint(x + width * 0.5, y + height * 0.5)
 
 
 def triangle4(model, idx, mvpvp: Mat4x4, width, height, zbuffer, qp: QPainter, light_dir, tex: Image):
