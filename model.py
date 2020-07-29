@@ -16,6 +16,7 @@ class Model(object):
 
 		self.diffuse_tex = None
 		self.normal_tex = None
+		self.specular_tex = None
 
 	def vert_uv_normal_by_face(self, iface, nth_vert):
 		info = self.faces[iface][nth_vert]
@@ -50,10 +51,15 @@ class Model(object):
 		normal.normalize()
 		return normal
 
+	def specular(self, u, v):
+		tex_width, tex_height = self.normal_tex.size
+		spec = self.normal_tex.getpixel((u * tex_width, v * tex_height))
+		return (spec[0] + spec[1] + spec[2]) * 0.33
+
 	def __str__(self):
 		return "'verts: {}, faces: {}".format(len(self.verts), len(self.faces))
 
-	def read_from_file(self, model_file_name, diffuse_file=None, normal_file=None):
+	def read_from_file(self, model_file_name, diffuse_file=None, normal_file=None, specular_file=None):
 		with open(model_file_name, 'r') as f:
 			try:
 				words = []
@@ -66,9 +72,9 @@ class Model(object):
 				traceback.print_exc()
 				print('error: ', line)
 				print('words: ', words)
-		self.read_tex(diffuse_file, normal_file)
+		self.read_tex(diffuse_file, normal_file, specular_file)
 
-	def read_tex(self, diffuse_file=None, normal_file=None):
+	def read_tex(self, diffuse_file=None, normal_file=None, specular_file=None):
 		if diffuse_file:
 			tex = Image.open(diffuse_file)
 			self.diffuse_tex = tex.transpose(Image.FLIP_TOP_BOTTOM)
@@ -76,6 +82,9 @@ class Model(object):
 			tex = Image.open(normal_file)
 			self.normal_tex = tex.transpose(Image.FLIP_TOP_BOTTOM)
 			self.generate_TB()
+		if specular_file:
+			tex = Image.open(specular_file)
+			self.specular_tex = tex.transpose(Image.FLIP_TOP_BOTTOM)
 
 	def generate_TB(self):
 		if not self.normal_tex or not self.vnorm:

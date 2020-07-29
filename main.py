@@ -45,7 +45,27 @@ class MainWnd(QtWidgets.QWidget):
 		# self.lesson_3(qp)
 		# self.lesson_4(qp)
 		# self.lesson_6_1(qp)
-		self.lesson_6_2(qp)
+		# self.lesson_6_2(qp)
+		self.lesson_6_3(qp)
+
+	def lesson_6_3(self, qp: QPainter):
+		size, width, height, zbuffer = self.init(qp)
+
+		view_pos = Vec3(0, 0, 2.5)
+		view_mat = math3d.look_at(view_pos, Vec3(0, 0, 0), Vec3(0, 1, 0))
+		proj_mat = math3d.perspective(1.5, 4.0 / 3, 1.0, -1.0)
+		vp = math3d.viewport(width, height)
+		mvpvp = vp * proj_mat * view_mat
+
+		m = model.Model()
+		m.read_from_file('./obj/african_head.obj', diffuse_file='./obj/african_head_diffuse.tga',
+						normal_file='./obj/african_head_nm_tangent.tga',
+						specular_file='./obj/african_head_spec.tga')
+
+		light_dir = Vec3(0, 0, 1)
+
+		shader = pipeline.L63Specular(m, light_dir, mvpvp, view_pos, qp, zbuffer, width, height)
+		shader.render()
 
 	def lesson_6_2(self, qp: QPainter):
 		size, width, height, zbuffer = self.init(qp)
