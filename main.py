@@ -46,7 +46,32 @@ class MainWnd(QtWidgets.QWidget):
 		# self.lesson_4(qp)
 		# self.lesson_6_1(qp)
 		# self.lesson_6_2(qp)
-		self.lesson_6_3(qp)
+		# self.lesson_6_3(qp)
+		self.lesson_7(qp)
+
+	def lesson_7(self, qp: QPainter):
+		size, width, height, zbuffer = self.init(qp)
+
+		light_pos = Vec3(1.5, 1.5, 1.5)
+		view_pos = Vec3(0, 0, 2.5)
+		origin = Vec3(0, 0, 0)
+		up = Vec3(0, 1, 0)
+
+		view_mat = math3d.look_at(light_pos, origin, up)
+		proj_mat = math3d.perspective(1.5, 4.0 / 3, 1.0, -1.0)
+		vp = math3d.viewport(width, height)
+		mvpvp_shadow = vp * proj_mat * view_mat
+
+		view_mat = math3d.look_at(view_pos, origin, up)
+		mvpvp = vp * proj_mat * view_mat
+
+		m = model.Model()
+		m.read_from_file('./obj/african_head.obj', diffuse_file='./obj/african_head_diffuse.tga',
+						 normal_file='./obj/african_head_nm_tangent.tga',
+						 specular_file='./obj/african_head_spec.tga')
+
+		shader = pipeline.L7ShadowMapping(m, light_pos, mvpvp_shadow, mvpvp, view_pos, qp, zbuffer, width, height)
+		shader.render()
 
 	def lesson_6_3(self, qp: QPainter):
 		size, width, height, zbuffer = self.init(qp)

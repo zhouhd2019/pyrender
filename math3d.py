@@ -276,7 +276,7 @@ def look_at(eye: Vec3, center: Vec3, up: Vec3):
 		view[4 + i] = y[i]
 		view[8 + i] = z[i]
 		tr[i * 4 + 3] = center[i] - eye[i]
-	return tr * view
+	return view * tr
 
 
 def perspective(fov, ratio, near, far):
