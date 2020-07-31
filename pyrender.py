@@ -236,3 +236,30 @@ def triangle64(screen_coords: List[Vec3], fragment, draw, zbuffer: List[float], 
 			bOK, color = fragment(bc)
 			if bOK:
 				draw(x, y, color)
+
+
+def triangle8(screen_coords: List[Vec3], fragment, draw, zbuffer: List[float], size: (int, int)):
+	width, height = size
+
+	pt0 = screen_coords[0]
+	pt1 = screen_coords[1]
+	pt2 = screen_coords[2]
+
+	bbox_min_x = int(max(0, min(pt0.x, min(pt1.x, pt2.x))))
+	bbox_min_y = int(max(0, min(pt0.y, min(pt1.y, pt2.y))))
+	bbox_max_x = int(min(width, max(pt0.x, max(pt1.x, pt2.x))))
+	bbox_max_y = int(min(height, max(pt0.y, max(pt1.y, pt2.y))))
+
+	bary = pre_barycentric([pt0, pt1, pt2])
+	for x in range(bbox_min_x, bbox_max_x + 1):
+		for y in range(bbox_min_y, bbox_max_y + 1):
+			bc = bary(x, y)
+			if bc.x < 0 or bc.y < 0 or bc.z < 0:
+				continue
+			z = bc.x * pt0.z + bc.y * pt1.z + bc.z * pt2.z
+			if zbuffer[x + y * width] > z:
+				continue
+			zbuffer[x + y * width] = z
+			bOK, color = fragment(bc, x, y, z)
+			if bOK:
+				draw(x, y, color)

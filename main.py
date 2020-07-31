@@ -47,7 +47,25 @@ class MainWnd(QtWidgets.QWidget):
 		# self.lesson_6_1(qp)
 		# self.lesson_6_2(qp)
 		# self.lesson_6_3(qp)
-		self.lesson_7(qp)
+		# self.lesson_7(qp)
+		self.lesson_8(qp)
+
+	def lesson_8(self, qp: QPainter):
+		size, width, height, zbuffer = self.init(qp)
+
+		view_pos = Vec3(1.5, 1, 1.5)
+		origin = Vec3(0, 0, 0)
+		up = Vec3(0, 1, 0)
+		proj_mat = math3d.perspective(1.5, 4.0 / 3, 1.0, -1.0)
+		vp = math3d.viewport(width, height)
+		view_mat = math3d.look_at(view_pos, origin, up)
+		mvpvp = vp * proj_mat * view_mat
+
+		m = model.Model()
+		m.read_from_file('./obj/african_head.obj')
+
+		shader = pipeline.L8AmbientOcclusion(m, mvpvp, qp, zbuffer, width, height)
+		shader.render()
 
 	def lesson_7(self, qp: QPainter):
 		size, width, height, zbuffer = self.init(qp)

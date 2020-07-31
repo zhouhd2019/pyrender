@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import math
 from typing import List, Tuple
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtGui import QPainter, QColor
@@ -307,3 +308,85 @@ class L7ShadowMapping(object):
 		result.y = min(10 + diffuse.y * (intensity + spec * 0.6) * shadow, 255)
 		result.z = min(10 + diffuse.z * (intensity + spec * 0.6) * shadow, 255)
 		return True, result
+
+
+class L8AmbientOcclusion(object):
+	def __init__(self, model, mvpvp: Mat4x4, qp: QPainter, zbuffer: List[float], width, height):
+		self.model = model
+		self.mvpvp = mvpvp
+		self.qp = qp
+		self.zbuffer = zbuffer
+		self.size = (width, height)
+
+		self.depth = [0, 0, 0]
+		self.shadow_map = [-9999] * ((width + 1) * (height + 1))
+
+		self.uv = [Vec2(), Vec2(), Vec2()]
+
+	def render(self):
+		self.render_depth()
+		self.render_ao()
+
+	def render_depth(self):
+		screen_coords = [Vec3(), Vec3(), Vec3()]
+		zbuffer = self.zbuffer
+		size = self.size
+		qp = self.qp
+		self.minz = 9999
+		self.maxz = -9999
+
+		def draw_pixel(x, y, color: Vec3):
+			qp.setPen(QColor(color.x, color.y, color.z))
+			qp.drawPoint(x, y)
+
+		triangle = pyrender.triangle8
+		fragment = self.fragment_depth
+		for i in range(len(self.model.faces)):
+			for j in range(3):
+				screen_coords[j] = self.vertex_depth(i, j)
+			triangle(screen_coords, fragment, draw_pixel, zbuffer, size)
+
+	def vertex_depth(self, iface: int, nth_vert: int):
+		vert, uv, normal = self.model.vert_uv_normal_by_face(iface, nth_vert)
+		return self.mvpvp.mul_vec3(vert)
+
+	def fragment_depth(self, barycentric, x, y, z):
+		self.minz = min(z, self.minz)
+		self.maxz = max(z, self.maxz)
+		return False, Vec3(z, z, z)
+
+	def render_ao(self):
+		zbuffer = self.zbuffer
+		qp = self.qp
+
+		width, height = self.size
+		pi4 = 4 * 3.14
+		for x in range(width):
+			for y in range(height):
+				if zbuffer[x + y*width] <= -9999:
+					continue
+				occlusion = 0
+				for i in range(8):
+					occlusion += self.get_occlusion_on_dir(x, y, i * 3.14 / 8)
+				occlusion = (pi4 - occlusion * 0.125) / pi4
+				occlusion = int(255 * pow(occlusion, 30))
+				qp.setPen(QColor(occlusion, occlusion, occlusion))
+				qp.drawPoint(x, y)
+
+	def get_occlusion_on_dir(self, x, y, rad_x):
+		width, height = self.size
+		zbuffer = self.zbuffer
+		origin = Vec2(x, y)
+		origin_z = zbuffer[x + y * width]
+		check_dir = Vec2(math.cos(rad_x), math.sin(rad_x))
+		max_radian = 0
+		for t in range(5):
+			cur = origin + check_dir * t * 2
+			if 0 <= cur.x < width and 0 <= cur.y < height:
+				elevation = zbuffer[int(cur.x) + int(cur.y) * width] - origin_z + 0.0
+				if elevation <= 0:
+					continue
+				max_radian = max(max_radian, math.atan(elevation / t))
+			else:
+				return max_radian
+		return max_radian
